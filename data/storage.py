@@ -1,0 +1,2 @@
+documents = []
+next_id = 1
