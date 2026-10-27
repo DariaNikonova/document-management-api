@@ -259,3 +259,32 @@ def test_token_without_sub_returns_401(client):
     )
 
     assert response.status_code == 401
+
+def test_user_cannot_see_another_users_documents(
+    client,
+    auth_headers,
+    admin_headers,
+):
+    response = client.post(
+        "/documents",
+        json={
+            "title": "Admin private document",
+            "filename": "admin_private.txt",
+        },
+        headers=admin_headers,
+    )
+    assert response.status_code == 201
+
+    response = client.get(
+        "/documents",
+        headers=auth_headers,
+    )
+    assert response.status_code == 200
+
+    documents = response.json()
+
+    assert all(document["user"] == "test_user" for document in documents)
+    assert all(
+        document["title"] != "Admin private document"
+        for document in documents
+    )
