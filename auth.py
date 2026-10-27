@@ -100,21 +100,15 @@ def get_current_user(
             algorithms=[ALGORITHM]
         )
 
-        user_id = payload.get("sub")
+        user_id = int(payload.get("sub"))
 
-        if user_id is None:
-            raise HTTPException(
-                status_code=401,
-                detail="Invalid token"
-            )
-
-    except (jwt.InvalidTokenError, ValueError):
+    except (jwt.InvalidTokenError, ValueError, TypeError):
         raise HTTPException(
             status_code=401,
             detail="Invalid token"
         )
 
-    user = db.get(User, int(user_id))
+    user = db.get(User, user_id)
 
     if user is None:
         raise HTTPException(
@@ -123,7 +117,6 @@ def get_current_user(
         )
 
     return user
-
 
 def require_admin(
     current_user: User = Depends(get_current_user)

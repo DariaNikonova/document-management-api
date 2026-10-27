@@ -180,3 +180,82 @@ def test_admin_can_access_admin_endpoint(client, admin_headers):
     assert response.status_code == 200
     assert response.json()["username"] == "test_admin"
     assert response.json()["role"] == "admin"
+
+def test_invalid_token_returns_401(client):
+    response = client.get(
+        "/documents",
+        headers={"Authorization": "Bearer invalid.token.value"},
+    )
+
+    assert response.status_code == 401
+
+def test_token_with_non_numeric_sub_returns_401(client):
+    import jwt
+    import os
+
+    secret_key = os.getenv("SECRET_KEY")
+
+    token = jwt.encode(
+        {
+            "sub": "abc",
+            "role": "user",
+            "exp": 4102444800,
+        },
+        secret_key,
+        algorithm="HS256",
+    )
+
+    response = client.get(
+        "/documents",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 401
+
+def test_expired_token_returns_401(client):
+    import jwt
+    import os
+    from datetime import datetime, timedelta, timezone
+
+    secret_key = os.getenv("SECRET_KEY")
+
+    expired_time = datetime.now(timezone.utc) - timedelta(minutes=5)
+
+    token = jwt.encode(
+        {
+            "sub": "1",
+            "role": "user",
+            "exp": expired_time,
+        },
+        secret_key,
+        algorithm="HS256",
+    )
+
+    response = client.get(
+        "/documents",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 401
+
+def test_token_without_sub_returns_401(client):
+    import jwt
+    import os
+
+    secret_key = os.getenv("SECRET_KEY")
+
+    token = jwt.encode(
+        {
+            "role": "user",
+            "exp": 4102444800,
+        },
+        secret_key,
+        algorithm="HS256",
+    )
+
+    response = client.get(
+        "/documents",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 401
