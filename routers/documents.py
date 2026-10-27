@@ -24,14 +24,12 @@ def create_document(
     db=Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    document_db = create_document_db(
+    return create_document_db(
         db,
         document.title,
         document.filename,
         current_user.username,
     )
-
-    return document_db
 
 
 @documents_router.get(
@@ -44,13 +42,12 @@ def get_documents(
     limit: int = Query(default=10, ge=1, le=10),
     current_user=Depends(get_current_user),
 ):
-    documents = get_documents_db(db, offset, limit)
-
-    return [
-        document
-        for document in documents
-        if document.user == current_user.username
-    ]
+    return get_documents_db(
+        db,
+        current_user.username,
+        offset,
+        limit,
+    )
 
 
 @documents_router.get(
@@ -128,10 +125,8 @@ def update_document(
             detail="You can only update your own documents",
         )
 
-    document_db = update_document_db(
+    return update_document_db(
         db,
         document_id,
         updated_document.title,
     )
-
-    return document_db

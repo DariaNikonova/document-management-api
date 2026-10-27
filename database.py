@@ -1,6 +1,6 @@
 from datetime import date, datetime
 import os
-
+from dotenv import load_dotenv
 from sqlalchemy import create_engine, select, DateTime, func
 from sqlalchemy.orm import (
     sessionmaker,
@@ -8,7 +8,7 @@ from sqlalchemy.orm import (
     Mapped,
     mapped_column,
 )
-
+load_dotenv()
 
 DATABASE_URL = (
     f"postgresql+psycopg://"
@@ -80,18 +80,21 @@ def create_document(
 
     return document
 
-
 def get_document_by_id(db, document_id):
     query = select(Document).where(Document.id == document_id)
     result = db.execute(query)
     return result.scalar_one_or_none()
 
-
-def get_documents(db, offset, limit):
-    query = select(Document).limit(limit).offset(offset)
+def get_documents(db, user, offset, limit):
+    query = (
+        select(Document)
+        .where(Document.user == user)
+        .order_by(Document.id)
+        .offset(offset)
+        .limit(limit)
+    )
     result = db.execute(query)
     return result.scalars().all()
-
 
 def update_document(db, document_id, new_title):
     document = db.get(Document, document_id)
